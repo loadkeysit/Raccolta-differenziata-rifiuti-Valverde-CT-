@@ -1,0 +1,80 @@
+{
+  "manifest": {
+    "publishingInformation": {
+      "locales": {
+        "it-IT": {
+          "summary": "Raccolta differenziata rifiuti Valverde (CT) by Elon Media Technology .it",
+          "examplePhrases": [
+            "Alexa, apri raccolta differenziata Valverde",
+            "raccolta rifiuti valverde"
+          ],
+          "keywords": [
+            "raccolta",
+            "rifiuti"
+          ],
+          "name": "Raccolta differenziata rifiuti Valverde (CT)",
+          "description": "Raccolta differenziata rifiuti Valverde (CT)",
+          "smallIconUri": "file://assets/images/it-IT_smallIconUri.png",
+          "largeIconUri": "file://assets/images/it-IT_largeIconUri.png"
+        }
+      },
+      "automaticDistribution": {
+        "sourceLocaleForLanguages": [
+          {
+            "sourceLocale": "it-IT",
+            "language": "it"
+          }
+        ],
+        "isActive": true
+      },
+      "isAvailableWorldwide": false,
+      "testingInstructions": "{\"ask_dist_username\":\"\",\"ask_dist_password\":\"\",\"ask_dist_testing_instructions\":\"Sample Testing Instructions.\"}",
+      "category": "CALENDARS_AND_REMINDERS",
+      "distributionMode": "PUBLIC",
+      "distributionCountries": [
+        "IT"
+      ]
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "arn:aws:lambda:eu-west-1:694988998293:function:42837785-9ae5-444e-adf0-3d1a6d47c6c4:Release_0"
+        },
+        "interfaces": [],
+        "locales": {},
+        "regions": {
+          "EU": {
+            "endpoint": {
+              "uri": "arn:aws:lambda:eu-west-1:694988998293:function:42837785-9ae5-444e-adf0-3d1a6d47c6c4:Release_0"
+            }
+          },
+          "NA": {
+            "endpoint": {
+              "uri": "arn:aws:lambda:us-east-1:694988998293:function:42837785-9ae5-444e-adf0-3d1a6d47c6c4:Release_0"
+            }
+          },
+          "FE": {
+            "endpoint": {
+              "uri": "arn:aws:lambda:us-west-2:694988998293:function:42837785-9ae5-444e-adf0-3d1a6d47c6c4:Release_0"
+            }
+          }
+        }
+      }
+    },
+    "manifestVersion": "1.0",
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "locales": {
+        "it-IT": {}
+      },
+      "containsAds": false,
+      "isExportCompliant": true,
+      "isChildDirected": false,
+      "shoppingKit": {
+        "isShoppingActionsEnabled": false,
+        "isAmazonAssociatesOnAlexaEnabled": false
+      },
+      "usesPersonalInfo": false
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "slots": [
+            {
+              "name": "day",
+              "type": "AMAZON.DayOfWeek"
+            }
+          ],
+          "name": "DayIntent",
+          "samples": [
+            "Cosa devo portare fuori oggi",
+            "Cosa devo portare fuori domani",
+            "Cosa devo portare fuori stasera",
+            "Che rifiuti devo portare fuori {day}",
+            "Qual è la raccolta prevista {day} ",
+            "Cosa devo portare fuori {day}"
+          ]
+        },
+        {
+          "slots": [
+            {
+              "name": "stasera",
+              "type": "AMAZON.DATE"
+            }
+          ],
+          "name": "TonightIntent",
+          "samples": [
+            "Dimmi cosa devo mettere fuori stasera",
+            "Che rifiuti devo portare fuori stasera",
+            "Qual è la raccolta per stasera",
+            "Cosa devo portare fuori stasera"
+          ]
+        }
+      ],
+      "types": [],
+      "invocationName": "raccolta differenziata valverde"
+    }
+  }
+}
