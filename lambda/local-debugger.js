@@ -1,135 +1,154 @@
-/*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * A copy of the License is located at
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * or in the "license" file accompanying this file. This file is distributed
- * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
+const Alexa = require('ask-sdk-core');
 
-/* ## DEPRECATION NOTICE
+// Programma della raccolta differenziata
+const schedule = {
+    'lunedì': 'organico e sfalci di potatura',
+    'martedì': 'plastica e alluminio',
+    'mercoledì': 'organico',
+    'giovedì': 'secco residuo (solo in date specifiche)',
+    'venerdì': 'carta e cartone',
+    'sabato': 'organico e vetro',
+    'domenica': 'nessuna raccolta'
+};
 
-This script has been deprecated and is no longer supported. 
-Please use the [ASK Toolkit for VS Code]
-(https://marketplace.visualstudio.com/items?itemName=ask-toolkit.alexa-skills-kit-toolkit), 
-which provides a more end-to-end integration with Visual Studio Code. If you 
-use another editor/IDE, please check out the [ASK SDK Local Debug package at npm]
-(https://www.npmjs.com/package/ask-sdk-local-debug).
 
-*/
 
-const net = require('net');
-const fs = require('fs');
-
-const localDebugger = net.createServer();
-
-const httpHeaderDelimeter = '\r\n';
-const httpBodyDelimeter = '\r\n\r\n';
-const defaultHandlerName = 'handler';
-const host = 'localhost';
-const defaultPort = 0;
-
-/**
- * Resolves the skill invoker class dependency from the user provided
- * skill entry file.
- */
-
-// eslint-disable-next-line import/no-dynamic-require
-const skillInvoker = require(getAndValidateSkillInvokerFile());
-const portNumber = getAndValidatePortNumber();
-const lambdaHandlerName = getLambdaHandlerName();
-
-/**
- * Starts listening on the port for incoming skill requests.
- */
-
-localDebugger.listen(portNumber, host, () => {
-    console.log(`Starting server on port: ${localDebugger.address().port}.`);
-});
-
-/**
- * For a new incoming skill request a new socket connection is established.
- * From the data received on the socket the request body is extracted, parsed into
- * JSON and passed to the skill invoker's lambda handler.
- * The response from the lambda handler is parsed as a HTTP 200 message format as specified
- * here - https://developer.amazon.com/docs/custom-skills/request-and-response-json-reference.html#http-header-1
- * The response is written onto the socket connection.
- */
-
-localDebugger.on('connection', (socket) => {
-    console.log(`Connection from: ${socket.remoteAddress}:${socket.remotePort}`);
-    socket.on('data', (data) => {
-        const body = JSON.parse(data.toString().split(httpBodyDelimeter).pop());
-        console.log(`Request envelope: ${JSON.stringify(body)}`);
-        skillInvoker[lambdaHandlerName](body, null, (_invokeErr, response) => {
-            response = JSON.stringify(response);
-            console.log(`Response envelope: ${response}`);
-            socket.write(`HTTP/1.1 200 OK${httpHeaderDelimeter}Content-Type: application/json;charset=UTF-8${httpHeaderDelimeter}Content-Length: ${response.length}${httpBodyDelimeter}${response}`);
-        });
-    });
-});
-
-/**
- * Validates user specified port number is in legal range [0, 65535].
- * Defaults to 0.
- */
-
-function getAndValidatePortNumber() {
-    const portNumberArgument = Number(getArgument('portNumber', defaultPort));
-    if (!Number.isInteger(portNumberArgument)) {
-        throw new Error(`Port number has to be an integer - ${portNumberArgument}.`);
+// Handler per l'evento di avvio della skill
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
+    },
+    handle(handlerInput) {
+        const speakOutput = 'Benvenuto nella skill non ufficiale sulla raccolta differenziata nel comune di Valverde, Catania. Offerta gratuitamente da elonmediatechnology.it (visita il sito web)! Puoi chiedermi cosa devi portare fuori oggi, domani o un altro giorno della settimana.';
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt('Chiedimi, ad esempio: "Che rifiuti devo portare fuori oggi?"')
+            .getResponse();
     }
-    if (portNumberArgument < 0 || portNumberArgument > 65535) {
-        throw new Error(`Port out of legal range: ${portNumberArgument}. The port number should be in the range [0, 65535]`);
+};
+
+// Handler per l'intento TonightIntent
+const TonightIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest' &&
+               Alexa.getIntentName(handlerInput.requestEnvelope) === 'TonightIntent';
+    },
+    handle(handlerInput) {
+        const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString('it-IT', { weekday: 'long' });
+
+        const speakOutput = `Stasera, devi preparare i rifiuti per domani. Domani è ${tomorrow}, e devi portare fuori ${schedule[tomorrow] || 'niente'}.`;
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .getResponse();
     }
-    if (portNumberArgument === 0) {
-        console.log('The TCP server will listen on a port that is free.'
-        + 'Check logs to find out what port number is being used');
-    }
-    return portNumberArgument;
-}
+};
 
-/**
- * Gets the lambda handler name.
- * Defaults to "handler".
- */
+// Handler per gestire l'intento DayIntent
+const DayIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest' &&
+               Alexa.getIntentName(handlerInput.requestEnvelope) === 'DayIntent';
+    },
+    handle(handlerInput) {
+        const slots = handlerInput.requestEnvelope.request.intent.slots;
+        const daySlot = slots.day && slots.day.value ? slots.day.value.toLowerCase() : null;
 
-function getLambdaHandlerName() {
-    return getArgument('lambdaHandler', defaultHandlerName);
-}
+        console.log('Slot "day" ricevuto:', daySlot);
 
-/**
- * Validates that the skill entry file exists on the path specified.
- * This is a required field.
- */
+        const today = new Date().toLocaleDateString('it-IT', { weekday: 'long' });
+        const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString('it-IT', { weekday: 'long' });
 
-// eslint-disable-next-line consistent-return
-function getAndValidateSkillInvokerFile() {
-    const fileNameArgument = getArgument('skillEntryFile');
-    if (!fs.existsSync(fileNameArgument)) {
-        throw new Error(`File not found: ${fileNameArgument}`);
-    }
-    return fileNameArgument;
-}
+        let speakOutput;
 
-/**
- * Helper function to fetch the value for a given argument
- * @param {argumentName} argumentName name of the argument for which the value needs to be fetched
- * @param {defaultValue} defaultValue default value of the argument that is returned if the value doesn't exist
- */
-
-function getArgument(argumentName, defaultValue) {
-    const index = process.argv.indexOf(`--${argumentName}`);
-    if (index === -1 || typeof process.argv[index + 1] === 'undefined') {
-        if (defaultValue === undefined) {
-            throw new Error(`Required argument - ${argumentName} not provided.`);
+        if (!daySlot) {
+            // Lo slot non è stato popolato
+            speakOutput = 'Non ho capito il giorno. Puoi ripetere? Ad esempio, puoi dire "oggi", "domani" o un giorno della settimana.';
+        } else if (daySlot === 'oggi') {
+            speakOutput = `Oggi è ${today}. Devi portare fuori ${schedule[today] || 'niente'}.`;
+        } else if (daySlot === 'domani') {
+            speakOutput = `Domani è ${tomorrow}. Devi portare fuori ${schedule[tomorrow] || 'niente'}.`;
+        } else if (schedule[daySlot]) {
+            speakOutput = `Il ${daySlot} devi portare fuori ${schedule[daySlot]}.`;
         } else {
-            return defaultValue;
+            speakOutput = `Non ho informazioni sulla raccolta per il giorno ${daySlot}. Puoi ripetere?`;
         }
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt('Come posso aiutarti?')
+            .getResponse();
     }
-    return process.argv[index + 1];
-}
+};
+
+// Handler per il comando di aiuto
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest' &&
+               Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = 'Puoi chiedermi quale raccolta è prevista oggi, domani o per un giorno specifico della settimana.';
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt('Come posso aiutarti?')
+            .getResponse();
+    }
+};
+
+// Handler per i comandi di stop e cancellazione
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest' &&
+               (Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.CancelIntent' ||
+                Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speakOutput = 'A presto!';
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .getResponse();
+    }
+};
+
+// Handler per riflettere l'intento invocato (utile per il debug)
+const IntentReflectorHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest';
+    },
+    handle(handlerInput) {
+        const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
+        const speakOutput = `Hai invocato l'intento ${intentName}.`;
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .getResponse();
+    }
+};
+
+// Handler per gestire errori
+const ErrorHandler = {
+    canHandle() {
+        return true;
+    },
+    handle(handlerInput, error) {
+        console.error(`Errore gestito: ${error.message}`);
+        const speakOutput = 'Scusa, si è verificato un errore. Per favore riprova.';
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt('Per favore riprova.')
+            .getResponse();
+    }
+};
+
+// Configurazione ed esportazione della skill
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(
+        LaunchRequestHandler,
+        TonightIntentHandler,
+        DayIntentHandler,
+        HelpIntentHandler,
+        CancelAndStopIntentHandler,
+        IntentReflectorHandler
+    )
+    .addErrorHandlers(ErrorHandler)
+    .lambda();
